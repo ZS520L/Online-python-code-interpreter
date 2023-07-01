@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Code Editor</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #000000;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        background-color: #1e1e1e;
+        width: 60%;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        border-radius: 6px;
+    }
+
+    h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        color: #ffffff;
+    }
+
+    textarea, pre {
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 15px;
+        border: 1px solid #444444;
+        border-radius: 4px;
+        outline: none;
+        resize: none;
+        background-color: #282828;
+        color: #ffffff;
+    }
+
+    textarea {
+        height: 400px;
+        margin-bottom: 20px;
+    }
+
+    pre {
+        height: 200px;
+    }
+
+    button {
+        background-color: #007bff;
+        color: #ffffff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Python Code Editor</h1>
+        <textarea id="code"></textarea>
+        <button onclick="runCode()" style="background-color: #28a745">Run</button>
+        <button onclick="copyCode()">Copy</button>
+        <button onclick="clearCode()" style="background-color: #dc3545">Clear</button>
+        <pre id="output"></pre>
+    </div>
+    <script>
+      function runCode() {
+        const code = document.getElementById('code').value;
+        fetch('/run', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'code=' + encodeURIComponent(code)
+        })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('output').textContent = data.output;
+        });
+      }
+
+      function copyCode() {
+        const code = document.getElementById('code');
+        code.select();
+        document.execCommand('copy');
+      }
+
+      function clearCode() {
+        document.getElementById('code').value = '';
+      }
+
+      document.getElementById('code').addEventListener('keydown', function (event) {
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+
+    // Insert four spaces at the cursor position
+    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+
+    // Move the cursor to the right by four characters
+    this.selectionStart = this.selectionEnd = start + 4;
+  } else if (event.key === 'Enter') {
+    event.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+
+    let currentIndent = '';
+    let i = start - 1;
+    while (i >= 0 && this.value[i] !== '\n') {
+      i--;
+    }
+    i++;
+
+    // Get the current line's indentation
+    while (this.value.substring(i, i + 4) === '    ') {
+      currentIndent += '    ';
+      i += 4;
+    }
+
+    let newLineContent = '\n' + currentIndent;
+
+    // Check if the previous character is a colon
+    if (this.value[start - 1] === ':') {
+      newLineContent += '    ';
+    }
+
+    // Insert a newline and the appropriate indentation at the cursor position
+    this.value = this.value.substring(0, start) + newLineContent + this.value.substring(end);
+
+    // Move the cursor to the right by the length of the new line content
+    this.selectionStart = this.selectionEnd = start + newLineContent.length;
+  }
+});
+
+    </script>
+  </body>
+</html>
